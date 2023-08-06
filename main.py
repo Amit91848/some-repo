@@ -113,7 +113,7 @@ llama_daemon.start()
 app = FastAPI()
 
 origins = [
-    "http://103.98.7.78:1212"
+    "http://localhost:1212"
 ]
 
 app.add_middleware(
