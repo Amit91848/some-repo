@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from queue import Queue
@@ -36,7 +36,7 @@ report_collection = db["report_collection"]
 CONTEXT_WINDOW = 2048
 
 llm = Llama(
-    model_path="Wizard-Vicuna-7B-Uncensored.ggmlv3.q8_0.bin",
+    model_path="Wizard-Vicuna-13B-Uncensored.ggmlv3.q8_0.bin",
     n_gpu_layers=64,  # Set the number of layers to run on the GPU
     n_ctx=4096
 )
@@ -128,8 +128,8 @@ app.add_middleware(
 def read_root():
     return {"Fuck": "You"}
 
-@app.get("/genreport/")
-def generate_prompt(inputdata: INPUTObject):
+@app.post("/genreport/")
+def generate_prompt(inputdata: INPUTObject = Body()):
     url_id = inputdata.obj_id
     user_id = inputdata.user_id
     document = collection.find_one({"_id": ObjectId(url_id)})
