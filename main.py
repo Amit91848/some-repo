@@ -144,5 +144,5 @@ def generate_prompt(inputdata: INPUTObject = Body()):
     body_text = document["body"]
     request_object = REQObject(user_id=user_id, obj_id=url_id, body=body_text, name=name)
     llama_q.put(request_object)
-    collection.update_one({"_id": ObjectId(user_id)}, {"$set": {"report_generated": 1}})
+    collection.update_one({"_id": ObjectId(url_id)}, {"$set": {"report_generated": 1}})
     return f"REPORT REQUESTED for id:{url_id}"
