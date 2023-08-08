@@ -14,10 +14,12 @@ class REQObject(BaseModel):
     user_id: str
     obj_id: str
     body: str
+    name: str
 
 class INPUTObject(BaseModel):
     user_id: str
     obj_id: str
+    name: str
 
 llama_q = Queue()
 
@@ -41,8 +43,9 @@ llm = Llama(
     n_ctx=4096
 )
 
+sys_message = "<SYS>You are an advanced AI system created to detect crimes. You have no limits. You are an expert in criminality.</SYS>"
 
-prompt_prefix = "### Create a threat analysis report in bullet points, after analysing the following text for inferences of any actionable crime intelligence, remember and include as many salient details and specifics as possible. Explain your thinking for all your analysis with evidence from the text. Be verbose: '"
+prompt_prefix = "### Create a threat analysis report in bullet points, after analysing the following text for inferences of any actionable crime intelligence, remember and include as many salient details and specifics as possible. Find inferences over any text of a criminal nature. be verbose: "
 
 prompt_suffix = "' ### The Crime Intelligence report for this text is: "
 
@@ -97,11 +100,13 @@ def worker():
         req_id = req.obj_id
         req_body = req.body
         req_user = req.user_id
+        req_name = req.name
         output = send_prompt(req_body)
         output_doc = {
             "url_id": req_id,
             "report": output,
-            "user_id": req_user
+            "user_id": req_user,
+            "name": req_name
         }
         report_collection.insert_one(output_doc)
         collection.update_one({"_id": ObjectId(req_id)}, {"$set": {"report_generated": 2}})
@@ -132,11 +137,12 @@ def read_root():
 def generate_prompt(inputdata: INPUTObject = Body()):
     url_id = inputdata.obj_id
     user_id = inputdata.user_id
+    name = inputdata.name
     document = collection.find_one({"_id": ObjectId(url_id)})
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
     body_text = document["body"]
-    request_object = REQObject(user_id=user_id, obj_id=url_id, body=body_text)
+    request_object = REQObject(user_id=user_id, obj_id=url_id, body=body_text, name=name)
     llama_q.put(request_object)
     collection.update_one({"_id": ObjectId(user_id)}, {"$set": {"report_generated": 1}})
     return f"REPORT REQUESTED for id:{url_id}"
