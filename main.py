@@ -34,6 +34,8 @@ db = mongoclient[DB_NAME]
 collection = db[COLL_NAME]
 report_collection = db["report_collection"]
 
+crawled_sites = db['crawled_sites']
+
 
 CONTEXT_WINDOW = 2048
 
@@ -109,7 +111,7 @@ def worker():
             "name": req_name
         }
         report_collection.insert_one(output_doc)
-        collection.update_one({"_id": ObjectId(req_id)}, {"$set": {"report_generated": 2}})
+        crawled_sites.update_one({"_id": ObjectId(req_id)}, {"$set": {"report_generated": 2}})
 
 
 llama_daemon = threading.Thread(target=worker, daemon=True)
@@ -144,5 +146,5 @@ def generate_prompt(inputdata: INPUTObject = Body()):
     body_text = document["body"]
     request_object = REQObject(user_id=user_id, obj_id=url_id, body=body_text, name=name)
     llama_q.put(request_object)
-    collection.update_one({"_id": ObjectId(url_id)}, {"$set": {"report_generated": 1}})
+    crawled_sites.update_one({"_id": ObjectId(url_id)}, {"$set": {"report_generated": 1}})
     return f"REPORT REQUESTED for id:{url_id}"
