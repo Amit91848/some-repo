@@ -105,13 +105,14 @@ def worker():
         req_name = req.name
         output = send_prompt(req_body)
         output_doc = {
-            "url_id": req_id,
+            # "url_id": req_id,
             "report": output,
-            "user_id": req_user,
-            "name": req_name
+            # "user_id": req_user,
+            # "name": req_name
         }
-        report_collection.insert_one(output_doc)
-        crawled_sites.update_one({"_id": ObjectId(req_id)}, {"$set": {"report_generated": 2}})
+        # report_collection.insert_one(output_doc)
+        report_collection.update_one({ "url_id": req_id }, { "$set": { "report": output, "$report_generated": 2 } })
+        # crawled_sites.update_one({"_id": ObjectId(req_id)}, {"$set": {"report_generated": 2}})
 
 
 llama_daemon = threading.Thread(target=worker, daemon=True)
@@ -145,6 +146,14 @@ def generate_prompt(inputdata: INPUTObject = Body()):
         raise HTTPException(status_code=404, detail="Document not found")
     body_text = document["body"]
     request_object = REQObject(user_id=user_id, obj_id=url_id, body=body_text, name=name)
+    output_doc = {
+        "url_id": url_id,
+        # "report": output,
+        "user_id": user_id,
+        "name": name,
+        "report_generated": 1
+    }
+    doc = report_collection.insert_one(output_doc)
     llama_q.put(request_object)
-    crawled_sites.update_one({"_id": ObjectId(url_id)}, {"$set": {"report_generated": 1}})
+    # crawled_sites.update_one({"_id": ObjectId(url_id)}, {"$set": {"report_generated": 1}})
     return f"REPORT REQUESTED for id:{url_id}"
